@@ -1,10 +1,20 @@
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import f1_score
 import pandas as pd
 from itertools import islice
+
+params={
+ "learning_rate"    : [0.05, 0.10, 0.15, 0.20, 0.25, 0.30 ] ,
+ "max_depth"        : [ 3, 4, 5, 6, 8, 10, 12, 15],
+ "min_child_weight" : [ 1, 3, 5, 7 ],
+ "gamma"            : [ 0.0, 0.1, 0.2 , 0.3, 0.4 ],
+ "colsample_bytree" : [ 0.3, 0.4, 0.5 , 0.7 ]
+    
+}
+
 def window(seq, n=3):               
     it = iter(seq)
     result = tuple(islice(it, n))
@@ -56,9 +66,20 @@ vec = CountVectorizer()
 train_data = vec.fit_transform(all_seq)
 target_y = df["label"].to_numpy()
 train , val , y_train , y_val = train_test_split(train_data,target_y,test_size=0.2,shuffle=True)
-train, test, y_train, y_test = train_test_split(train,y_train,test_size=0.2,shuffle=True)
-model = XGBClassifier() 
+#train, test, y_train, y_test = train_test_split(train,y_train,test_size=0.2,shuffle=True)
+model = XGBClassifier(base_score=0.5, booster='gbtree', callbacks=None,
+              colsample_bylevel=1, colsample_bynode=1, colsample_bytree=0.4,
+              early_stopping_rounds=None, enable_categorical=False,
+              eval_metric=None, feature_types=None, gamma=0.4, gpu_id=-1,
+              grow_policy='depthwise', importance_type=None,
+              interaction_constraints='', learning_rate=0.15, max_bin=256,
+              max_cat_threshold=64, max_cat_to_onehot=4, max_delta_step=0,
+              max_depth=15, max_leaves=0, min_child_weight=1, 
+              monotone_constraints='()', n_estimators=100, n_jobs=0,
+              num_parallel_tree=1, objective='multi:softprob', predictor='auto')
+random_search=RandomizedSearchCV(model,param_distributions=params,n_iter=5,n_jobs=-1,cv=5,verbose=3)
 model.fit(train, y_train)
-model.fit(val, y_val)
-pred = model.predict(test)
-print(f1_score(pred,y_test,average='micro') )
+#model.fi(val, y_val)
+pred = model.predict(val)
+print(f1_score(pred,y_val,average='micro') )
+#print(random_search.best_estimator_)
