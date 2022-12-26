@@ -3,10 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import f1_score
-from sklearn.ensemble import AdaBoostClassifier
 import pandas as pd
-import numpy as np
-
 from itertools import islice
 def window(seq, n=3):               
     it = iter(seq)
@@ -53,15 +50,14 @@ for sequence in rhabdo_seq:
     split_seq = str(["".join(ele) for ele in window(sequence)])
     split_rhabdo_seq.append(split_seq)
 all_seq = split_corona_seq + split_retro_seq + split_picorna_seq + split_adeno_seq + split_rhabdo_seq
-# 0 = corona, 1 = retro
+# 0 = corona, 1 = retro, ...
 df = pd.concat([df1, df2, df3, df4, df5], ignore_index=True)
 vec = CountVectorizer()
 train_data = vec.fit_transform(all_seq)
 target_y = df["label"].to_numpy()
-# train_data = train_data.reshape(train_data.shape[:1])
 train , val , y_train , y_val = train_test_split(train_data,target_y,test_size=0.2,shuffle=True)
 train, test, y_train, y_test = train_test_split(train,y_train,test_size=0.2,shuffle=True)
-model = XGBClassifier() # ada
+model = XGBClassifier() 
 model.fit(train, y_train)
 model.fit(val, y_val)
 pred = model.predict(test)
